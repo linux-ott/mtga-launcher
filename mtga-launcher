@@ -43,7 +43,7 @@ print_purple "
 "
 
 # Download & Install Proton
-if [ "$UPDATE_MODE_ENABLED" = "true" ] || [ ! -x "$WINE_BIN" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -x "$WINE_BIN" ]; then
     tmp_file="$SCRIPT_TEMP_DIR/proton-amd64.tar.xz"
     curl -fLk "$WINE_URL" -o "$tmp_file"
     mkdir -p "$SCRIPT_TEMP_DIR/wine64"
@@ -60,7 +60,7 @@ if [ ! -d "$WINE_PREFIX" ]; then
 fi
 
 # Download MTGA Installer
-if [ "$UPDATE_MODE_ENABLED" = "true" ] || [ ! -f "$MAGIC_INSTALLER" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -f "$MAGIC_INSTALLER" ]; then
     wait && curl -fLk "$MAGIC_INSTALLER_URL" -o "$MAGIC_INSTALLER"
 fi
 
@@ -79,6 +79,6 @@ if [ ! -f "$MAGIC_BIN" ] && [ -f "$MAGIC_INSTALLER" ]; then
 fi
 
 # Run client (if update mode disabled)
-if [ "$UPDATE_MODE_ENABLED" = "false" ] && [ -f "$MAGIC_BIN" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "false" ] && [ -f "$MAGIC_BIN" ]; then
     wait && wine_exec start /unix "$MAGIC_BIN"
 fi
