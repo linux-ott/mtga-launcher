@@ -1,3 +1,3 @@
-./wine
-./wineprefix
+wine/
+wineprefix/
 mtga-installer.exe
