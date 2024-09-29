@@ -44,6 +44,7 @@ print_purple "
 
 # Download & Install Proton
 if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -x "$WINE_BIN" ]; then
+    echo "Download & Install Proton"
     tmp_file="$SCRIPT_TEMP_DIR/proton-amd64.tar.xz"
     curl -fLk "$WINE_URL" -o "$tmp_file"
     mkdir -p "$SCRIPT_TEMP_DIR/wine64"
@@ -56,15 +57,18 @@ fi
 
 # Install client if prefix does not exists
 if [ ! -d "$WINE_PREFIX" ]; then
+    echo "Install client if prefix does not exists"
     wait && wine_exec wineboot -u
 fi
 
 # Download MTGA Installer
 if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -f "$MAGIC_INSTALLER" ]; then
+    echo "Download MTGA Installer"
     wait && curl -fLk "$MAGIC_INSTALLER_URL" -o "$MAGIC_INSTALLER"
 fi
 
 # Create desktop file
+echo "Creating / updating desktop entry"
 {
     echo "[Desktop Entry]"
     echo "Name=MTGA Launcher"
@@ -75,10 +79,12 @@ fi
 
 # Install client if prefix does not exists
 if [ ! -f "$MAGIC_BIN" ] && [ -f "$MAGIC_INSTALLER" ]; then
+    echo "Install client if prefix does not exists"
     wait && wine_exec start /unix "$MAGIC_INSTALLER"
 fi
 
 # Run client (if update mode disabled)
 if [ "$UPDATE_MODE_ENABLED" == "false" ] && [ -f "$MAGIC_BIN" ]; then
+    echo "Run client"
     wait && wine_exec start /unix "$MAGIC_BIN"
 fi
