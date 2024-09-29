@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #set -Eeu
 
+set -e
+
 # --------------------------------------------------------------
 # VARIABLES
 # --------------------------------------------------------------
@@ -11,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SCRIPT_FILE="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 ICON_FILE="$SCRIPT_DIR/res/mtga-launcher.svg"
 WINE_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/proton-8.0-2/wine-proton-8.0-2-amd64.tar.xz"
-WINE_BIN_DIR="$SCRIPT_DIR/wine"
-WINE_BIN="$WINE_BIN_DIR/bin/wine"
+WINE_BIN_DIR="$SCRIPT_DIR/wine/bin"
+WINE_BIN="$WINE_BIN_DIR/wine"
 WINE_PREFIX="$SCRIPT_DIR/wineprefix"
 WINE_INIT="" # gamemoderun
 MAGIC_BIN="$WINE_PREFIX/drive_c/Program Files/Wizards of the Coast/MTGA/MTGALauncher/MTGALauncher.exe"
@@ -24,9 +26,21 @@ MAGIC_INSTALLER="$SCRIPT_DIR/mtga-installer.exe"
 # FUNCTIONS
 # --------------------------------------------------------------
 
-wine_exec() {
-    WINEARCH="win64" WINEPREFIX="$WINE_PREFIX" $WINE_INIT "$WINE_BIN" "$@"
+wine_distro() {
+    PROGRAM="${1:?}"
+    ARGS=("${@:2}")
+    WINEARCH="win64" WINEPREFIX="$WINE_PREFIX" $WINE_INIT "${WINE_BIN_DIR}/$PROGRAM" "${ARGS[@]}"
 }
+
+wine_exec() {
+    wine_distro "wine" "$@"
+}
+
+if [ "$1" == "distro" ];then
+    wine_distro "${@:2}"
+    # Prevent more execution
+    exit 2
+fi
 
 print_purple() { echo -e "\e[35m${1}\e[0m"; }
 
