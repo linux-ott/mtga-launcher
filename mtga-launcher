@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #set -Eeu
 
+set -e
+
 # --------------------------------------------------------------
 # VARIABLES
 # --------------------------------------------------------------
@@ -11,11 +13,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SCRIPT_FILE="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 ICON_FILE="$SCRIPT_DIR/res/mtga-launcher.svg"
 WINE_URL="https://github.com/Kron4ek/Wine-Builds/releases/download/proton-8.0-2/wine-proton-8.0-2-amd64.tar.xz"
-WINE_BIN_DIR="$SCRIPT_DIR/wine"
-WINE_BIN="$WINE_BIN_DIR/bin/wine"
+WINE_BIN_DIR="$SCRIPT_DIR/wine/bin"
+WINE_BIN="$WINE_BIN_DIR/wine"
 WINE_PREFIX="$SCRIPT_DIR/wineprefix"
 WINE_INIT="" # gamemoderun
-MAGIC_BIN="$SCRIPT_DIR/drive_c/Program Files/Wizards of the Coast/MTGA/MTGALauncher.exe"
+MAGIC_BIN="$WINE_PREFIX/drive_c/Program Files/Wizards of the Coast/MTGA/MTGALauncher/MTGALauncher.exe"
 #MAGIC_INSTALLER_URL=$(curl --silent "https://mtgarena.downloads.wizards.com/Live/Windows64/version" | jq -r ".CurrentInstallerURL")
 MAGIC_INSTALLER_URL="https://mtgarena.downloads.wizards.com/Live/Windows64/MTGAInstaller.exe"
 MAGIC_INSTALLER="$SCRIPT_DIR/mtga-installer.exe"
@@ -24,9 +26,21 @@ MAGIC_INSTALLER="$SCRIPT_DIR/mtga-installer.exe"
 # FUNCTIONS
 # --------------------------------------------------------------
 
-wine_exec() {
-    WINEARCH="win64" WINEPREFIX="$WINE_PREFIX" $WINE_INIT "$WINE_BIN" "$@"
+wine_distro() {
+    PROGRAM="${1:?}"
+    ARGS=("${@:2}")
+    WINEARCH="win64" WINEPREFIX="$WINE_PREFIX" $WINE_INIT "${WINE_BIN_DIR}/$PROGRAM" "${ARGS[@]}"
 }
+
+wine_exec() {
+    wine_distro "wine" "$@"
+}
+
+if [ "$1" == "distro" ];then
+    wine_distro "${@:2}"
+    # Prevent more execution
+    exit 2
+fi
 
 print_purple() { echo -e "\e[35m${1}\e[0m"; }
 
@@ -43,7 +57,8 @@ print_purple "
 "
 
 # Download & Install Proton
-if [ "$UPDATE_MODE_ENABLED" = "true" ] || [ ! -x "$WINE_BIN" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -x "$WINE_BIN" ]; then
+    echo "Download & Install Proton"
     tmp_file="$SCRIPT_TEMP_DIR/proton-amd64.tar.xz"
     curl -fLk "$WINE_URL" -o "$tmp_file"
     mkdir -p "$SCRIPT_TEMP_DIR/wine64"
@@ -56,15 +71,18 @@ fi
 
 # Install client if prefix does not exists
 if [ ! -d "$WINE_PREFIX" ]; then
+    echo "Install client if prefix does not exists"
     wait && wine_exec wineboot -u
 fi
 
 # Download MTGA Installer
-if [ "$UPDATE_MODE_ENABLED" = "true" ] || [ ! -f "$MAGIC_INSTALLER" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "true" ] || [ ! -f "$MAGIC_INSTALLER" ]; then
+    echo "Download MTGA Installer"
     wait && curl -fLk "$MAGIC_INSTALLER_URL" -o "$MAGIC_INSTALLER"
 fi
 
 # Create desktop file
+echo "Creating / updating desktop entry"
 {
     echo "[Desktop Entry]"
     echo "Name=MTGA Launcher"
@@ -75,10 +93,12 @@ fi
 
 # Install client if prefix does not exists
 if [ ! -f "$MAGIC_BIN" ] && [ -f "$MAGIC_INSTALLER" ]; then
+    echo "Install client if prefix does not exists"
     wait && wine_exec start /unix "$MAGIC_INSTALLER"
 fi
 
 # Run client (if update mode disabled)
-if [ "$UPDATE_MODE_ENABLED" = "false" ] && [ -f "$MAGIC_BIN" ]; then
+if [ "$UPDATE_MODE_ENABLED" == "false" ] && [ -f "$MAGIC_BIN" ]; then
+    echo "Run client"
     wait && wine_exec start /unix "$MAGIC_BIN"
 fi
